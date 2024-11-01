@@ -12,7 +12,7 @@ pipeline {
                     sshagent(credentials: ['ssh-build-server']) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
-                            cd ${DIR} &&
+                            cd /home/alvaro/retail-store-build &&
                             git checkout ${GIT_BRANCH} &&
                             git pull origin ${GIT_BRANCH}
                         '
