@@ -1,4 +1,4 @@
-# AWS Containers Retail Sample - UI Service - TestCI
+# AWS Containers Retail Sample - UI Service - TestCICD
 
 | Language | Persistence |
 | -------- | ----------- |
