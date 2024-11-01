@@ -75,27 +75,24 @@ pipeline {
                     sshagent(credentials: ['ssh-build-server']) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
-                            # Basic Docker Scan
-                            echo "Running Basic Docker Scan..." &&
-                            docker scan ${IMAGE_TAG} || true &&
-                            
-                            # Lightweight Vulnerability Check
-                            echo "Checking for known vulnerabilities in critical libraries..." &&
-                            docker run --rm ${IMAGE_TAG} sh -c "dpkg -l | grep -E \\"libarchive|openssl|curl\\"" &&
-                            
-                            # Check Docker Image Layers
+                            # Display Docker Image Layers
                             echo "Displaying Docker Image Layers..." &&
                             docker history ${IMAGE_TAG} &&
                             
-                            # Simple Docker Inspect
+                            # Inspect Docker Image Metadata
                             echo "Inspecting Docker Image Metadata..." &&
-                            docker inspect ${IMAGE_TAG} | grep -E "User|ExposedPorts|Env"
+                            docker inspect ${IMAGE_TAG} | grep -E "User|ExposedPorts|Env" &&
+                            
+                            # Export image and check library versions
+                            echo "Checking for known vulnerabilities in critical libraries..." &&
+                            docker export ${IMAGE_TAG} | tar -tvf - | grep -E "libarchive|openssl|curl"
                         '
                         """
                     }
                 }
             }
         }
+
 
 
         stage('Docker Registry Login and Push') {
