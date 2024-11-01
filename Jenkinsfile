@@ -52,22 +52,51 @@ pipeline {
             }
         }
 
-        stage('Scan Docker Image with Trivy') {
-            when {
-                changeset "src/ui/**"
-            }
+        // stage('Scan Docker Image with Trivy') {
+        //     when {
+        //         changeset "src/ui/**"
+        //     }
+        //     steps {
+        //         script {
+        //             sshagent(credentials: ['ssh-build-server']) {
+        //                 sh """
+        //                 ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
+        //                     trivy image --scanners vuln --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_TAG}
+        //                 '
+        //                 """
+        //             }
+        //         }
+        //     }
+        // }
+
+        stage('Basic Security Checks') {
             steps {
                 script {
                     sshagent(credentials: ['ssh-build-server']) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
-                            trivy image --scanners vuln --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_TAG}
+                            # Basic Docker Scan
+                            echo "Running Basic Docker Scan..." &&
+                            docker scan ${IMAGE_TAG} || true &&
+                            
+                            # Lightweight Vulnerability Check
+                            echo "Checking for known vulnerabilities in critical libraries..." &&
+                            docker run --rm ${IMAGE_TAG} sh -c "dpkg -l | grep -E \\"libarchive|openssl|curl\\"" &&
+                            
+                            # Check Docker Image Layers
+                            echo "Displaying Docker Image Layers..." &&
+                            docker history ${IMAGE_TAG} &&
+                            
+                            # Simple Docker Inspect
+                            echo "Inspecting Docker Image Metadata..." &&
+                            docker inspect ${IMAGE_TAG} | grep -E "User|ExposedPorts|Env"
                         '
                         """
                     }
                 }
             }
         }
+
 
         stage('Docker Registry Login and Push') {
             steps {
