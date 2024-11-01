@@ -42,7 +42,7 @@ pipeline {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
                             cd ${DIR} &&
-                            docker build -t ${IMAGE_TAG} src/ui
+                            docker buildx build -t ${IMAGE_TAG} src/ui
                         '
                         """
                     }
@@ -89,21 +89,6 @@ pipeline {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
                             docker push ${IMAGE_TAG}
-                        '
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Deploy on Kubernetes') {
-            steps {
-                script {
-                    sshagent(credentials: ['ssh-build-server']) {
-                        sh """
-                        ssh -o StrictHostKeyChecking=no ${SSH_DEPLOY_SERVER} '
-                            sed -i "s|image: .*\$|image: ${IMAGE_TAG}|g" ${DEPLOYMENT_FILE} &&
-                            kubectl apply -f ${DEPLOYMENT_FILE}
                         '
                         """
                     }
