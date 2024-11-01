@@ -22,6 +22,16 @@ pipeline {
             }
         }
 
+        // Multi Stage Pipeline -> retail-store-deployment
+        // stage('Trigger Deployment Pipeline') {
+        //     steps {
+        //         script {
+        //             // Trigger Jenkins job for deployment
+        //             build job: 'retail-store-deployment/deployment-pipeline', parameters: [string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")]
+        //         }
+        //     }
+        // }
+
         stage('Build Docker Image') {
             when {
                 changeset "src/ui/**"
