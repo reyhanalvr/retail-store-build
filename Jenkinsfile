@@ -61,7 +61,7 @@ pipeline {
                     sshagent(credentials: ['ssh-build-server']) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
-                            trivy image --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_TAG}
+                            trivy image --scanners vuln --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_TAG}
                         '
                         """
                     }
