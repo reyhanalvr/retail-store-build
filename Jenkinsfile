@@ -68,18 +68,23 @@ pipeline {
             }
         }
 
-        stage('Docker Registry Login') {
+        stage('Docker Registry Login and Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    script {
-                        sh """
-                        docker login ${DOCKER_REGISTRY} -u ${DOCKER_USER} -p ${DOCKER_PASS}
-                        """
+                sshagent(credentials: ['ssh-build-server']) {
+                    withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        script {
+                            sh """
+                            ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
+                                echo ${DOCKER_PASS} | docker login ${DOCKER_REGISTRY} -u ${DOCKER_USER} --password-stdin &&
+                                docker push ${IMAGE_TAG}
+                            '
+                            """
+                        }
                     }
                 }
             }
         }
-
+        
         stage('Push Docker Image to Registry') {
             when {
                 changeset "src/ui/**"
