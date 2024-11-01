@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE_TAG = "${IMAGE}:${BUILD_NUMBER}"
+        DIR = "/home/alvaro/retail-store-build"
     }
 
     stages {
