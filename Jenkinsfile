@@ -13,6 +13,7 @@ pipeline {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
                             cd /home/alvaro/retail-store-build &&
+                            git fetch origin &&
                             git checkout ${GIT_BRANCH} &&
                             git pull origin ${GIT_BRANCH}
                         '
