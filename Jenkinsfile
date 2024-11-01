@@ -68,7 +68,7 @@ pipeline {
         //         }
         //     }
         // }
-
+        
         stage('Basic Security Checks') {
             steps {
                 script {
@@ -83,9 +83,11 @@ pipeline {
                             echo "Inspecting Docker Image Metadata..." &&
                             docker inspect ${IMAGE_TAG} | grep -E "User|ExposedPorts|Env" &&
                             
-                            # Export image and check library versions
+                            # Create temporary container, export and check library versions
                             echo "Checking for known vulnerabilities in critical libraries..." &&
-                            docker export ${IMAGE_TAG} | tar -tvf - | grep -E "libarchive|openssl|curl"
+                            CONTAINER_ID=$(docker create ${IMAGE_TAG}) &&
+                            docker export $CONTAINER_ID | tar -tvf - | grep -E "libarchive|openssl|curl" &&
+                            docker rm $CONTAINER_ID
                         '
                         """
                     }
