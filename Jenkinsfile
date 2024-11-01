@@ -22,14 +22,32 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Docker Image') {
+            when {
+                changeset "src/ui/**" // Hanya lanjutkan jika ada perubahan di src/ui
+            }
+            steps {
+                script {
+                    sshagent(credentials: ['ssh-build-server']) {
+                        sh """
+                        ssh -o StrictHostKeyChecking=no alvaro@103.196.153.76 '
+                            cd ${DIR} &&
+                            docker build -t retail-store-ui:latestt src/ui
+                        '
+                        """
+                    }
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo 'Git pull successfully completed on app server.'
+            echo 'Pipeline completed successfully.'
         }
         failure {
-            echo 'Git pull failed on app server.'
+            echo 'Pipeline failed.'
         }
     }
 }
