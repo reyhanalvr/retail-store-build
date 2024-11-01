@@ -9,7 +9,11 @@ pipeline {
         stage('Checkout from GitHub') {
             steps {
                 script {
-                    git branch: "master", url: "https://github.com/reyhanalvr/retail-store-build", credentialsId: "github-credentials"
+                    // Checkout code
+                    git branch: GIT_BRANCH, url: "https://github.com/reyhanalvr/retail-store-build", credentialsId: "github-credentials"
+                    
+                    // Pull latest changes to ensure code is up-to-date
+                    sh "git pull origin ${GIT_BRANCH}"
                 }
             }
         }
