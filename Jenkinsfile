@@ -10,18 +10,21 @@ pipeline {
         stage('Check for UI Changes') {
             steps {
                 script {
-                    // Get previous commit hash
-                    previousCommit = sh(script: 'git rev-parse HEAD^', returnStdout: true).trim()
-                    
-                    // Check for changes in src/ui between current commit and previous commit
-                    hasUiChanges = sh(
-                        script: "git diff --quiet ${previousCommit} HEAD -- src/ui || echo 'has_changes'",
-                        returnStatus: true
-                    ) != 0
+                    // Cek commit sebelumnya untuk deteksi perubahan
+                    def previousCommit = sh(script: 'git rev-parse HEAD^', returnStdout: true).trim()
+                    // Cek apakah ada perubahan di src/ui
+                    def changes = sh(
+                        script: "git diff --name-only ${previousCommit} HEAD | grep '^src/ui/' || true",
+                        returnStdout: true
+                    ).trim()
+
+                    // Jika ada perubahan, atur hasUiChanges ke true
+                    hasUiChanges = changes ? true : false
+
+                    echo "Changes detected in src/ui: ${hasUiChanges}"
                 }
             }
         }
-
 
         stage('Git Pull on App Servers') {
             when {
@@ -70,16 +73,9 @@ pipeline {
                     sshagent(credentials: ['ssh-build-server']) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
-                            # Display Docker Image Layers
                             echo "Displaying Docker Image Layers..." &&
                             docker history ${IMAGE_TAG} &&
-                            
-                            # Inspect Docker Image Metadata
-                            echo "Inspecting Docker Image Metadata..." &&
                             docker inspect ${IMAGE_TAG} | grep -E "User|ExposedPorts|Env" &&
-                            
-                            # Create temporary container, export and check library versions
-                            echo "Checking for known vulnerabilities in critical libraries..." &&
                             CONTAINER_ID=\$(docker create ${IMAGE_TAG}) &&
                             docker export \${CONTAINER_ID} | tar -tvf - | grep -E "libarchive|openssl|curl" &&
                             docker rm \${CONTAINER_ID}
@@ -109,7 +105,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Push Docker Image to Registry') {
             when {
                 expression { return hasUiChanges }
