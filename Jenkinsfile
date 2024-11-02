@@ -24,16 +24,6 @@ pipeline {
             }
         }
 
-        // Multi Stage Pipeline -> retail-store-deployment
-        // stage('Trigger Deployment Pipeline') {
-        //     steps {
-        //         script {
-        //             // Trigger Jenkins job for deployment
-        //             build job: 'retail-store-deployment/deployment-pipeline', parameters: [string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")]
-        //         }
-        //     }
-        // }
-
         stage('Build Docker Image') {
             when {
                 changeset "src/ui/**"
@@ -52,23 +42,6 @@ pipeline {
             }
         }
 
-        // stage('Scan Docker Image with Trivy') {
-        //     when {
-        //         changeset "src/ui/**"
-        //     }
-        //     steps {
-        //         script {
-        //             sshagent(credentials: ['ssh-build-server']) {
-        //                 sh """
-        //                 ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
-        //                     trivy image --scanners vuln --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_TAG}
-        //                 '
-        //                 """
-        //             }
-        //         }
-        //     }
-        // }
-        
         stage('Basic Security Checks') {
             steps {
                 script {
@@ -94,7 +67,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('Docker Registry Login and Push') {
             steps {
@@ -150,14 +122,14 @@ pipeline {
                 }
             }
         }
-        
+    }
+
     post {
         success {
             echo 'Pipeline completed successfully.'
         }
         failure {
             echo 'Pipeline failed.'
-            }
         }
     }
 }
