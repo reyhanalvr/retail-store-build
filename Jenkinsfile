@@ -129,15 +129,30 @@ pipeline {
                 }
             }
         }
-    }
 
+        stage('Change Version for Deployment') {
+            when {
+                changeset "src/ui/**"
+            }
+            steps {
+                script {
+                    sshagent(credentials: ['ssh-build-server']) {
+                        sh """
+                        ssh -o StrictHostKeyChecking=no ${SSH_BUILD_SERVER} '
+                            cd /home/alvaro/retail-store-deploy/services/ui/deployment &&
+                            sed -i "s|image:.*|image: ${IMAGE_TAG}|" ui-deployment.yaml &&
+                            git add ui-deployment.yaml &&
+                            git commit -m "Update image tag to ${IMAGE_TAG} for Argo CD deployment" &&
+                            git push origin master
+                        '
+                        """
+                    }
+                }
+            }
+        }
+        
     post {
         success {
-            script {
-                // Trigger Deployment Pipeline
-                build job: 'retail-store-deployment', 
-                    parameters: [string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")]
-            }
             echo 'Pipeline completed successfully.'
         }
         failure {
