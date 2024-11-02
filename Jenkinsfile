@@ -96,8 +96,6 @@ pipeline {
         }
 
 
-
-
         stage('Docker Registry Login and Push') {
             steps {
                 sshagent(credentials: ['ssh-build-server']) {
@@ -135,6 +133,11 @@ pipeline {
 
     post {
         success {
+            script {
+                // Trigger Deployment Pipeline
+                build job: 'retail-store-deployment', 
+                    parameters: [string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")]
+            }
             echo 'Pipeline completed successfully.'
         }
         failure {
