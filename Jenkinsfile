@@ -10,13 +10,18 @@ pipeline {
         stage('Check for UI Changes') {
             steps {
                 script {
+                    // Get previous commit hash
+                    previousCommit = sh(script: 'git rev-parse HEAD^', returnStdout: true).trim()
+                    
+                    // Check for changes in src/ui between current commit and previous commit
                     hasUiChanges = sh(
-                        script: "git diff --quiet HEAD~1 HEAD -- src/ui || echo 'has_changes'",
+                        script: "git diff --quiet ${previousCommit} HEAD -- src/ui || echo 'has_changes'",
                         returnStatus: true
-                    ) == 0
+                    ) != 0
                 }
             }
         }
+
 
         stage('Git Pull on App Servers') {
             when {
