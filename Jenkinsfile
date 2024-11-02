@@ -7,7 +7,21 @@ pipeline {
     }
 
     stages {
+        stage('Check for UI Changes') {
+            steps {
+                script {
+                    hasUiChanges = sh(
+                        script: "git diff --quiet HEAD~1 HEAD -- src/ui || echo 'has_changes'",
+                        returnStatus: true
+                    ) == 0
+                }
+            }
+        }
+
         stage('Git Pull on App Servers') {
+            when {
+                expression { return hasUiChanges }
+            }
             steps {
                 script {
                     sshagent(credentials: ['ssh-build-server']) {
@@ -26,7 +40,7 @@ pipeline {
 
         stage('Build Docker Image') {
             when {
-                changeset "src/ui/**"
+                expression { return hasUiChanges }
             }
             steps {
                 script {
@@ -43,6 +57,9 @@ pipeline {
         }
 
         stage('Basic Security Checks') {
+            when {
+                expression { return hasUiChanges }
+            }
             steps {
                 script {
                     sshagent(credentials: ['ssh-build-server']) {
@@ -69,6 +86,9 @@ pipeline {
         }
 
         stage('Docker Registry Login and Push') {
+            when {
+                expression { return hasUiChanges }
+            }
             steps {
                 sshagent(credentials: ['ssh-build-server']) {
                     withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
@@ -87,7 +107,7 @@ pipeline {
         
         stage('Push Docker Image to Registry') {
             when {
-                changeset "src/ui/**"
+                expression { return hasUiChanges }
             }
             steps {
                 script {
@@ -104,7 +124,7 @@ pipeline {
 
         stage('Change Version for Deployment') {
             when {
-                changeset "src/ui/**"
+                expression { return hasUiChanges }
             }
             steps {
                 script {
